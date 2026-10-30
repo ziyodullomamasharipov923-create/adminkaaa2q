@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="uz" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Talabalar Yotoqxonasi Admin Paneli</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f4f6f8',
+                            100: '#e5e9f0',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800 h-full antialiased selection:bg-brand-600 selection:text-white">
+
+    <!-- LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900">
+        <div class="bg-white max-w-sm w-full p-8 rounded-2xl shadow-xl space-y-6">
+            <div class="text-center space-y-2">
+                <div class="w-12 h-12 bg-slate-900 rounded-xl flex items-center justify-center text-white mx-auto text-xl">
+                    <i class="fa-solid fa-building"></i>
+                </div>
+                <h1 class="text-xl font-bold text-slate-900 tracking-tight">Yotoqxona Admin</h1>
+                <p class="text-slate-500 text-xs">Boshqaruv tizimiga kirish</p>
+            </div>
+            
+            <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Login</label>
+                    <input type="text" id="login-username" required placeholder="admin"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:border-slate-400 transition-all text-xs">
+                </div>
+                
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Parol</label>
+                    <input type="password" id="login-password" required placeholder="••••••••"
+                        class="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 focus:bg-white focus:outline-none focus:border-slate-400 transition-all text-xs">
+                </div>
+
+                <div id="login-error" class="hidden p-3 bg-rose-50 border border-rose-200 text-rose-600 rounded-xl text-xs flex items-center gap-2">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span>Login yoki parol noto'g'ri! (Parol: 78870619)</span>
+                </div>
+
+                <button type="submit" 
+                    class="w-full py-3 px-4 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-all flex items-center justify-center gap-2 text-xs">
+                    <span>Tizimga Kirish</span>
+                    <i class="fa-solid fa-arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MAIN APP STRUCTURE -->
+    <div id="app-container" class="hidden min-h-screen flex flex-col md:flex-row">
+        
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-60 bg-slate-900 text-slate-300 flex-shrink-0 flex flex-col justify-between border-r border-slate-800">
+            <div>
+                <!-- Logo -->
+                <div class="p-4 flex items-center justify-between border-b border-slate-800">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 bg-slate-800 rounded-lg flex items-center justify-center text-white font-bold text-xs">
+                            <i class="fa-solid fa-hotel"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-white text-sm">Dorm Admin</h2>
+                            <span class="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Tizim v3.1</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Navigation -->
+                <nav class="p-3 space-y-1">
+                    <button onclick="switchTab('dashboard')" id="nav-dashboard" 
+                        class="nav-btn active w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-chart-pie w-4 text-center"></i> Hamasi xaqida malumot 
+                    </button>
+                    <button onclick="switchTab('rooms')" id="nav-rooms" 
+                        class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-bed w-4 text-center"></i> Qavat va Xonalar
+                    </button>
+                    <button onclick="switchTab('students')" id="nav-students" 
+                        class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-users w-4 text-center"></i> Talabalar
+                    </button>
+                    <button onclick="switchTab('payments')" id="nav-payments" 
+                        class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-wallet w-4 text-center"></i> To'lovlar
+                    </button>
+                    <button onclick="switchTab('issues')" id="nav-issues" 
+                        class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-wrench w-4 text-center"></i> Texnik Arizalar
+                    </button>
+                    <button onclick="switchTab('history')" id="nav-history" 
+                        class="nav-btn w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all hover:bg-slate-800 hover:text-white">
+                        <i class="fa-solid fa-clock-rotate-left w-4 text-center"></i> Tizim Tarixi
+                    </button>
+                </nav>
+            </div>
+
+            <!-- User Info & Logout -->
+            <div class="p-3 border-t border-slate-800">
+                <div class="flex items-center justify-between p-2 rounded-xl bg-slate-800/50">
+                    <div class="flex items-center gap-2">
+                        <div class="w-7 h-7 bg-slate-700 text-white rounded-lg flex items-center justify-center font-bold text-xs">
+                            <i class="fa-solid fa-user-gear"></i>
+                        </div>
+                        <div>
+                            <p class="text-xs font-semibold text-white">Admin</p>
+                            <p class="text-[10px] text-emerald-400">Faol</p>
+                        </div>
+                    </div>
+                    <button onclick="logout()" title="Tizimdan chiqish" class="text-slate-400 hover:text-rose-400 p-1.5 transition-colors">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT AREA -->
+        <main class="flex-1 bg-slate-50 flex flex-col min-h-screen overflow-x-hidden">
+            
+            <!-- TOP BAR -->
+            <header class="bg-white border-b border-slate-200 px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30">
+                <div>
+                    <h1 id="page-title" class="text-base font-bold text-slate-900">Dashboard</h1>
+                    <p class="text-[11px] text-slate-500">Yotoqxona umumiy ko'rsatkichlari va boshqaruvi</p>
+                </div>
+
+                <div class="flex items-center gap-3">
+                    <!-- Search -->
+                    <div class="relative w-56">
+                        <input type="text" id="global-search" oninput="handleSearch(this.value)" placeholder="ID, Ism, Pasport..."
+                            class="w-full pl-8 pr-3 py-1.5 bg-slate-100 rounded-lg text-xs border border-slate-200 focus:bg-white focus:border-slate-400 focus:outline-none transition-all">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                    </div>
+
+                    <!-- Quick Add Button -->
+                    <button onclick="openAddStudentModal()" 
+                        class="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium flex items-center gap-1.5 transition-all">
+                        <i class="fa-solid fa-user-plus"></i>
+                        <span>+ Talaba Qo'shish</span>
+                    </button>
+                </div>
+            </header>
+
+            <!-- TAB CONTENT CONTAINER -->
+            <div class="p-6 flex-1 space-y-6 max-w-7xl w-full mx-auto">
+
+                <!-- 1. DASHBOARD VIEW -->
+                <section id="view-dashboard" class="tab-view space-y-6">
+                    <!-- Stats Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Jami Talabalar</p>
+                                <h3 id="stat-total-students" class="text-xl font-bold text-slate-800 mt-1">0</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Jami Krovat</p>
+                                <h3 id="stat-total-beds" class="text-xl font-bold text-slate-800 mt-1">0</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-bed"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">Band Krovatlar</p>
+                                <h3 id="stat-occupied-beds" class="text-xl font-bold text-emerald-600 mt-1">0</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-user-check"></i>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[11px] font-medium text-slate-500 uppercase tracking-wider">To'lov Qarzdorlar</p>
+                                <h3 id="stat-unpaid-students" class="text-xl font-bold text-rose-600 mt-1">0</h3>
+                            </div>
+                            <div class="w-10 h-10 bg-rose-50 text-rose-600 rounded-lg flex items-center justify-center text-lg">
+                                <i class="fa-solid fa-triangle-exclamation"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Floor Overview -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-800 mb-3 flex items-center gap-2 text-xs uppercase tracking-wider">
+                            <i class="fa-solid fa-layer-group text-slate-600"></i> Qavatlar Bo'yicha Bandlik
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="dashboard-floors-summary">
+                            <!-- Floor summary inserted by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Recent Payment Alerts -->
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-bell text-amber-500"></i> Qarzdorligi Mavjud Talabalar
+                            </h3>
+                            <button onclick="switchTab('payments')" class="text-xs font-semibold text-slate-600 hover:text-slate-900">Barchasi &rarr;</button>
+                        </div>
+                        <div id="dashboard-unpaid-list" class="space-y-2">
+                            <!-- Unpaid list items -->
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 2. ROOMS & FLOORS VIEW -->
+                <section id="view-rooms" class="tab-view hidden space-y-6">
+                    <!-- Floor Selector & Info Header -->
+                    <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider mr-2">Qavat:</span>
+                            <button onclick="filterFloor(2)" id="btn-floor-2" class="floor-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 transition-all">2-Qavat (201-217)</button>
+                            <button onclick="filterFloor(3)" id="btn-floor-3" class="floor-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 transition-all">3-Qavat (301-317)</button>
+                            <button onclick="filterFloor(4)" id="btn-floor-4" class="floor-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-slate-200 transition-all">4-Qavat (401-417)</button>
+                        </div>
+                    </div>
+
+                    <!-- Rooms Grid Container -->
+                    <div id="rooms-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        <!-- Dynamic Rooms Rendered Here -->
+                    </div>
+                </section>
+
+                <!-- 3. STUDENTS LIST VIEW -->
+                <section id="view-students" class="tab-view hidden space-y-6">
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4">
+                            <div class="relative flex-1 max-w-xs">
+                                <input type="text" id="student-search-input" oninput="renderStudentsTable()" placeholder="Ism, ID yoki Pasport..."
+                                    class="w-full pl-8 pr-3 py-1.5 bg-slate-50 rounded-lg text-xs border border-slate-200 focus:outline-none focus:border-slate-400">
+                                <i class="fa-solid fa-magnifying-glass absolute left-2.5 top-2 text-slate-400 text-xs"></i>
+                            </div>
+                            <span id="student-count-badge" class="text-xs font-semibold text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">Jami: 0 ta</span>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                        <th class="p-3.5">Talaba ID / Rasm</th>
+                                        <th class="p-3.5">Ism va Familiya</th>
+                                        <th class="p-3.5">Joylashuv</th>
+                                        <th class="p-3.5">Telefon</th>
+                                        <th class="p-3.5">Ota-onasi Info</th>
+                                        <th class="p-3.5">To'lov Holati</th>
+                                        <th class="p-3.5 text-right">Amallar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="students-table-body" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. PAYMENTS VIEW -->
+                <section id="view-payments" class="tab-view hidden space-y-6">
+                    <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Oylik To'lovlar Nazorati va Eslatmalar</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Qarzdor talabalarga eslatma yuborish paneli</p>
+                        </div>
+                        
+                        <button onclick="triggerNewMonthReminders()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold transition-all">
+                            <i class="fa-solid fa-calendar-check mr-1"></i>
+                            <span>Yangi Oy To'lovlarini Faollashtirish</span>
+                        </button>
+                    </div>
+
+                    <div class="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 text-[11px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
+                                        <th class="p-3.5">Talaba ID & Ismi</th>
+                                        <th class="p-3.5">Xona</th>
+                                        <th class="p-3.5">Oylik To'lov</th>
+                                        <th class="p-3.5">To'lov Holati</th>
+                                        <th class="p-3.5">So'nggi To'lov Sanasi</th>
+                                        <th class="p-3.5 text-right">Amallar</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payments-table-body" class="divide-y divide-slate-100 text-xs">
+                                    <!-- Dynamic rows -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 5. ISSUES (TEXNIK ARIZALAR) VIEW -->
+                <section id="view-issues" class="tab-view hidden space-y-6">
+                    <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider">Texnik Murojaatlar va Nosozliklar</h3>
+                            <p class="text-xs text-slate-500">Xonalardagi ta'mirlash yoki xizmat ko'rsatish so'rovlari</p>
+                        </div>
+                        <button onclick="openAddIssueModal()" class="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium flex items-center gap-1.5">
+                            <i class="fa-solid fa-plus"></i> Yangi Murojaat
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="issues-list">
+                        <!-- Dynamic issues list -->
+                    </div>
+                </section>
+
+                <!-- 6. HISTORY LOG VIEW -->
+                <section id="view-history" class="tab-view hidden space-y-6">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                            <h3 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-2">
+                                <i class="fa-solid fa-clock-rotate-left text-slate-600"></i> Kirish va Tizim Harakatlari Tarixi
+                            </h3>
+                            <button onclick="clearHistoryLog()" class="text-xs text-rose-600 hover:underline font-medium">Tarixni Tozalash</button>
+                        </div>
+                        <div id="history-log-container" class="space-y-2 max-h-[500px] overflow-y-auto custom-scrollbar pr-2">
+                            <!-- Dynamic log items -->
+                        </div>
+                    </div>
+                </section>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: ADD / EDIT STUDENT -->
+    <div id="modal-student" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl shadow-xl max-w-lg w-full my-8 overflow-hidden border border-slate-200">
+            <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 id="modal-student-title" class="font-bold text-xs uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-user-plus"></i> Yangi Talaba Qo'shish
+                </h3>
+                <button onclick="closeModal('modal-student')" class="text-slate-400 hover:text-white transition-colors">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="form-student" onsubmit="saveStudent(event)" class="p-5 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
+                <input type="hidden" id="student-edit-id">
+
+                <!-- Photo Input -->
+                <div class="flex items-center gap-4 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                    <div class="w-14 h-14 rounded-xl bg-slate-200 border border-slate-300 overflow-hidden flex items-center justify-center text-slate-400 flex-shrink-0" id="photo-preview-container">
+                        <i class="fa-solid fa-user text-xl"></i>
+                    </div>
+                    <div class="flex-1 space-y-1">
+                        <label class="block text-xs font-semibold text-slate-700">Talaba Rasmi</label>
+                        <input type="text" id="student-photo-url" oninput="updatePhotoPreview(this.value)" placeholder="Rasm URL havolasi..."
+                            class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                        <input type="file" accept="image/*" onchange="handleFilePhotoUpload(event)" class="block w-full text-[10px] text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-[10px] file:font-semibold file:bg-slate-200 file:text-slate-700">
+                    </div>
+                </div>
+
+                <!-- Personal Info -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Ism va Familiya *</label>
+                        <input type="text" id="student-fullname" required placeholder="Masalan: Ali Valiyev"
+                            class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Pasport / ID Card № *</label>
+                        <input type="text" id="student-passport" required placeholder="AA 1234567"
+                            class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Telefon Raqami *</label>
+                        <input type="text" id="student-phone" required placeholder="+998 90 123 45 67"
+                            class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Oylik To'lov Summasi (so'm) *</label>
+                        <input type="number" id="student-fee" required min="0" placeholder="600000"
+                            class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                    </div>
+                </div>
+
+                <!-- Room & Bed Selection -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-bed"></i> Joylashuv (Qavat, Xona va Krovat)
+                    </h4>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Qavat</label>
+                            <select id="student-floor-select" onchange="onFloorSelectChange()" class="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 bg-white">
+                                <option value="2">2-Qavat</option>
+                                <option value="3">3-Qavat</option>
+                                <option value="4">4-Qavat</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Xona №</label>
+                            <select id="student-room-select" onchange="onRoomSelectChange()" class="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 bg-white">
+                                <!-- Dynamic options -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Krovat №</label>
+                            <select id="student-bed-select" class="w-full text-xs px-2.5 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 bg-white">
+                                <!-- Dynamic options -->
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Parents Info -->
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <h4 class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                        <i class="fa-solid fa-users"></i> Ota-onasi Ma'lumotlari
+                    </h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Ota/Onasining Ismi *</label>
+                            <input type="text" id="parent-name" required placeholder="Otasining ismi..."
+                                class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 bg-white">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-semibold text-slate-600 uppercase mb-1">Ota/Onasining Telefoni *</label>
+                            <input type="text" id="parent-phone" required placeholder="+998 91 987 65 43"
+                                class="w-full text-xs px-3 py-1.5 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 bg-white">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-student')" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-2 text-xs font-semibold bg-slate-900 hover:bg-slate-800 text-white rounded-lg shadow">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: STUDENT PROFILE DETAIL -->
+    <div id="modal-student-profile" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-slate-200">
+            <div id="profile-modal-body" class="p-5 space-y-4">
+                <!-- Profile details dynamically populated -->
+            </div>
+            <div class="p-3 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button onclick="closeModal('modal-student-profile')" class="px-4 py-1.5 bg-slate-900 text-white text-xs font-semibold rounded-lg">Yopish</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: EDIT ROOM BEDS COUNT -->
+    <div id="modal-edit-room" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-xs w-full overflow-hidden border border-slate-200">
+            <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-xs uppercase tracking-wider">Xona Sozlamalari</h3>
+                <button onclick="closeModal('modal-edit-room')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveRoomBeds(event)" class="p-5 space-y-4">
+                <input type="hidden" id="edit-room-id">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Xonadagi Krovatlar Soni (1-5)</label>
+                    <select id="edit-room-beds-select" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                        <option value="1">1 ta krovat</option>
+                        <option value="2">2 ta krovat</option>
+                        <option value="3">3 ta krovat</option>
+                        <option value="4">4 ta krovat</option>
+                        <option value="5">5 ta krovat</option>
+                    </select>
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-edit-room')" class="px-3 py-1.5 text-xs text-slate-600">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 text-xs bg-slate-900 text-white font-semibold rounded-lg">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: ADD TECHNICAL ISSUE -->
+    <div id="modal-issue" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-sm w-full overflow-hidden border border-slate-200">
+            <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-xs uppercase tracking-wider">Yangi Texnik Murojaat</h3>
+                <button onclick="closeModal('modal-issue')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <form onsubmit="saveIssue(event)" class="p-5 space-y-3">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Xona Raqami *</label>
+                    <input type="text" id="issue-room" required placeholder="Masalan: 201" class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Muammo Turi / Tavsifi *</label>
+                    <textarea id="issue-desc" required placeholder="Kran tomayapti, elektr muammosi..." class="w-full text-xs px-3 py-2 border border-slate-200 rounded-lg focus:outline-none focus:border-slate-400 h-20"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-2 border-t border-slate-100">
+                    <button type="button" onclick="closeModal('modal-issue')" class="px-3 py-1.5 text-xs text-slate-600">Bekor qilish</button>
+                    <button type="submit" class="px-4 py-1.5 text-xs bg-slate-900 text-white font-semibold rounded-lg">Saqlash</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: SEND PAYMENT REMINDER -->
+    <div id="modal-reminder" class="fixed inset-0 z-50 hidden bg-slate-900/60 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden border border-slate-200">
+            <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-xs uppercase tracking-wider flex items-center gap-2"><i class="fa-solid fa-paper-plane"></i> To'lov Eslatmasi Yuborish</h3>
+                <button onclick="closeModal('modal-reminder')" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="p-3 bg-slate-50 border border-slate-200 rounded-lg">
+                    <p class="text-[11px] text-slate-500">Tayyorlangan Eslatma Matni:</p>
+                    <p id="reminder-text-body" class="text-xs font-medium text-slate-800 mt-1 italic"></p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <a id="reminder-telegram-btn" target="_blank" class="w-full py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-brands fa-telegram"></i> Telegram Orqali Yuborish
+                    </a>
+                    <button onclick="copyReminderText()" class="w-full py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-all">
+                        <i class="fa-regular fa-copy"></i> Matnni Nusxalash
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION TOAST -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-4 py-3 rounded-xl shadow-xl flex items-center gap-3 text-xs border border-slate-800">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-sm"></i>
+        <span id="toast-msg">Xabar...</span>
+    </div>
+
+    <!-- APPLICATION LOGIC -->
+    <script>
+        // STORAGE KEYS
+        const STORAGE_KEY_ROOMS = 'smart_dorm_rooms_v31';
+        const STORAGE_KEY_STUDENTS = 'smart_dorm_students_v31';
+        const STORAGE_KEY_AUTH = 'smart_dorm_auth_v31';
+        const STORAGE_KEY_ISSUES = 'smart_dorm_issues_v31';
+        const STORAGE_KEY_LOGS = 'smart_dorm_logs_v31';
+
+        let rooms = [];
+        let students = [];
+        let issues = [];
+        let logs = [];
+        let activeFloorFilter = 2;
+
+        // Auto-Generate Default 17 rooms for Floors 2, 3, 4 (201-217, 301-317, 401-417)
+        function generateDefaultRooms() {
+            const result = [];
+            [2, 3, 4].forEach(fl => {
+                for (let i = 1; i <= 17; i++) {
+                    const roomNum = fl * 100 + i;
+                    result.push({
+                        id: `r_${roomNum}`,
+                        floor: fl,
+                        number: roomNum.toString(),
+                        totalBeds: 4 // Default 4 beds per room
+                    });
+                }
+            });
+            return result;
+        }
+
+        const defaultStudents = [
+            {
+                id: 'ST-1001',
+                fullName: 'Javohir Olimov',
+                passport: 'AA 9876543',
+                phone: '+998 90 123 45 67',
+                photo: '',
+                floor: 2,
+                roomId: 'r_201',
+                roomNumber: '201',
+                bedNum: 1,
+                fee: 600000,
+                parentName: 'Olim Rustamov (Otasi)',
+                parentPhone: '+998 91 555 44 33',
+                isPaid: true,
+                lastPaidDate: '2026-10-01'
+            },
+            {
+                id: 'ST-1002',
+                fullName: 'Sardor Rahimov',
+                passport: 'AB 1122334',
+                phone: '+998 93 456 78 90',
+                photo: '',
+                floor: 2,
+                roomId: 'r_201',
+                roomNumber: '201',
+                bedNum: 2,
+                fee: 600000,
+                parentName: 'Dilfuza Rahimova (Onasi)',
+                parentPhone: '+998 94 666 77 88',
+                isPaid: false,
+                lastPaidDate: '2026-09-01'
+            }
+        ];
+
+        const defaultIssues = [
+            { id: 'iss-1', room: '201', desc: 'Smesitel krani oqmoqda', status: 'Kutilmoqda', date: '2026-10-28 14:30' }
+        ];
+
+        // INIT ON LOAD
+        window.onload = function() {
+            checkAuth();
+            loadStorageData();
+            filterFloor(2);
+            renderAll();
+        };
+
+        // --- AUTHENTICATION ---
+        function checkAuth() {
+            const isAuth = localStorage.getItem(STORAGE_KEY_AUTH);
+            if (isAuth === 'true') {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+            }
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+
+            if (u === 'admin' && p === '78870619') {
+                localStorage.setItem(STORAGE_KEY_AUTH, 'true');
+                document.getElementById('login-error').classList.add('hidden');
+                checkAuth();
+                addAuditLog("Admin tizimga kirdi");
+                showToast('Hush kelibsiz, Admin!');
+            } else {
+                document.getElementById('login-error').classList.remove('hidden');
+            }
+        }
+
+        function logout() {
+            addAuditLog("Admin tizimdan chiqdi");
+            localStorage.removeItem(STORAGE_KEY_AUTH);
+            checkAuth();
+            showToast('Tizimdan chiqildi', 'info');
+        }
+
+        // --- LOCAL STORAGE HELPERS ---
+        function loadStorageData() {
+            const storedRooms = localStorage.getItem(STORAGE_KEY_ROOMS);
+            if (storedRooms) {
+                rooms = JSON.parse(storedRooms);
+            } else {
+                rooms = generateDefaultRooms();
+            }
+
+            students = JSON.parse(localStorage.getItem(STORAGE_KEY_STUDENTS)) || defaultStudents;
+            issues = JSON.parse(localStorage.getItem(STORAGE_KEY_ISSUES)) || defaultIssues;
+            logs = JSON.parse(localStorage.getItem(STORAGE_KEY_LOGS)) || [
+                { time: new Date().toLocaleString('uz-UZ'), action: "Tizim ma'lumotlari yuklandi" }
+            ];
+
+            saveAllToStorage();
+        }
+
+        function saveAllToStorage() {
+            localStorage.setItem(STORAGE_KEY_ROOMS, JSON.stringify(rooms));
+            localStorage.setItem(STORAGE_KEY_STUDENTS, JSON.stringify(students));
+            localStorage.setItem(STORAGE_KEY_ISSUES, JSON.stringify(issues));
+            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+        }
+
+        function addAuditLog(actionMsg) {
+            const timeStr = new Date().toLocaleString('uz-UZ');
+            logs.unshift({ time: timeStr, action: actionMsg });
+            if (logs.length > 50) logs.pop();
+            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+        }
+
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-view').forEach(view => view.classList.add('hidden'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active', 'bg-slate-800', 'text-white'));
+
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeNav) {
+                activeNav.classList.add('active', 'bg-slate-800', 'text-white');
+            }
+
+            const titles = {
+                dashboard: "Dashboard - Umumiy Holat",
+                rooms: "Qavatlar va Xonalar",
+                students: "Talabalar Baza Paneli",
+                payments: "To'lovlar va Eslatmalar",
+                issues: "Texnik Murojaatlar",
+                history: "Tizim Tarixi Loglari"
+            };
+            document.getElementById('page-title').innerText = titles[tabId] || 'Admin Panel';
+
+            renderAll();
+        }
+
+        // --- RENDER ALL VIEWS ---
+        function renderAll() {
+            renderDashboard();
+            renderRooms();
+            renderStudentsTable();
+            renderPaymentsTable();
+            renderIssues();
+            renderHistoryLogs();
+        }
+
+        // --- 1. DASHBOARD LOGIC ---
+        function renderDashboard() {
+            document.getElementById('stat-total-students').innerText = students.length;
+            let totalBeds = rooms.reduce((sum, r) => sum + parseInt(r.totalBeds), 0);
+            document.getElementById('stat-total-beds').innerText = totalBeds;
+            document.getElementById('stat-occupied-beds').innerText = students.length;
+            let unpaidCount = students.filter(s => !s.isPaid).length;
+            document.getElementById('stat-unpaid-students').innerText = unpaidCount;
+
+            // Floor Summaries
+            const floorsSummaryEl = document.getElementById('dashboard-floors-summary');
+            floorsSummaryEl.innerHTML = '';
+
+            [2, 3, 4].forEach(fl => {
+                let flRooms = rooms.filter(r => r.floor == fl);
+                let flBeds = flRooms.reduce((sum, r) => sum + parseInt(r.totalBeds), 0);
+                let flStudents = students.filter(s => s.floor == fl).length;
+
+                let card = document.createElement('div');
+                card.className = "p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between";
+                card.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-xs">${fl}-Qavat (${fl}01 - ${fl}17)</h4>
+                        <p class="text-[11px] text-slate-500 mt-0.5">${flRooms.length} ta xona | ${flBeds} ta krovat</p>
+                        <p class="text-[11px] font-semibold text-slate-800 mt-0.5">${flStudents} ta talaba joylashgan</p>
+                    </div>
+                    <div class="text-base text-slate-400 font-bold">#0${fl}</div>
+                `;
+                floorsSummaryEl.appendChild(card);
+            });
+
+            // Unpaid list
+            const unpaidListEl = document.getElementById('dashboard-unpaid-list');
+            unpaidListEl.innerHTML = '';
+            const unpaidStudents = students.filter(s => !s.isPaid);
+
+            if (unpaidStudents.length === 0) {
+                unpaidListEl.innerHTML = `<p class="text-xs text-emerald-600 bg-emerald-50 p-2.5 rounded-lg border border-emerald-100"><i class="fa-solid fa-circle-check mr-1"></i> Barcha talabalar to'lovni amalga oshirishgan!</p>`;
+            } else {
+                unpaidStudents.forEach(st => {
+                    let item = document.createElement('div');
+                    item.className = "flex items-center justify-between p-2.5 rounded-lg bg-rose-50/50 border border-rose-100";
+                    item.innerHTML = `
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-6 h-6 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-[10px]">
+                                <i class="fa-solid fa-exclamation"></i>
+                            </div>
+                            <div>
+                                <p class="font-bold text-slate-800 text-xs">${st.fullName} <span class="font-normal text-slate-400">(${st.id})</span></p>
+                                <p class="text-[10px] text-slate-500">${st.floor}-qavat, ${st.roomNumber}-xona | Tel: ${st.phone}</p>
+                            </div>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-xs font-bold text-rose-600 block">${Number(st.fee).toLocaleString()} so'm</span>
+                            <button onclick="openReminderModal('${st.id}')" class="text-[10px] text-slate-600 hover:text-slate-900 underline font-semibold">Eslatish</button>
+                        </div>
+                    `;
+                    unpaidListEl.appendChild(item);
+                });
+            }
+        }
+
+        // --- 2. ROOMS & BEDS LOGIC ---
+        function filterFloor(floorNum) {
+            activeFloorFilter = floorNum;
+            document.querySelectorAll('.floor-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-900', 'text-white', 'border-slate-900');
+                btn.classList.add('border-slate-200', 'text-slate-700', 'bg-white');
+            });
+            const activeBtn = document.getElementById(`btn-floor-${floorNum}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('bg-white');
+                activeBtn.classList.add('bg-slate-900', 'text-white', 'border-slate-900');
+            }
+            renderRooms();
+        }
+
+        function renderRooms() {
+            const grid = document.getElementById('rooms-grid');
+            grid.innerHTML = '';
+
+            const filteredRooms = rooms.filter(r => r.floor == activeFloorFilter);
+
+            filteredRooms.forEach(room => {
+                let roomCard = document.createElement('div');
+                roomCard.className = "bg-white rounded-xl border border-slate-200 shadow-sm p-4 space-y-3";
+
+                let roomStudents = students.filter(s => s.roomId === room.id);
+
+                let bedsHTML = '';
+                for (let b = 1; b <= room.totalBeds; b++) {
+                    let occupant = roomStudents.find(s => s.bedNum == b);
+                    if (occupant) {
+                        bedsHTML += `
+                            <div onclick="openStudentProfile('${occupant.id}')" class="p-2 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between cursor-pointer hover:border-slate-400 transition-all">
+                                <div class="flex items-center gap-2 overflow-hidden">
+                                    <div class="w-5 h-5 rounded bg-slate-800 text-white flex items-center justify-center font-bold text-[10px] flex-shrink-0">
+                                        ${b}
+                                    </div>
+                                    <div class="truncate">
+                                        <p class="font-bold text-slate-800 text-xs truncate">${occupant.fullName}</p>
+                                    </div>
+                                </div>
+                                <span class="text-[9px] bg-rose-100 text-rose-700 font-bold px-1.5 py-0.5 rounded flex-shrink-0">Band</span>
+                            </div>
+                        `;
+                    } else {
+                        bedsHTML += `
+                            <div class="p-2 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-5 h-5 rounded bg-slate-300 text-slate-700 flex items-center justify-center font-bold text-[10px]">
+                                        ${b}
+                                    </div>
+                                    <span class="text-xs text-slate-500 font-medium">Bo'sh</span>
+                                </div>
+                                <button onclick="openAddStudentModal('${room.floor}', '${room.id}', ${b})" class="text-[9px] bg-slate-900 hover:bg-slate-800 text-white px-2 py-0.5 rounded font-bold transition-all">
+                                    + Joylash
+                                </button>
+                            </div>
+                        `;
+                    }
+                }
+
+                roomCard.innerHTML = `
+                    <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+                        <div>
+                            <h4 class="font-bold text-slate-800 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                                <i class="fa-solid fa-door-closed text-slate-600"></i> ${room.number}-Xona
+                            </h4>
+                            <p class="text-[10px] text-slate-400">${room.floor}-Qavat | ${room.totalBeds} ta krovat</p>
+                        </div>
+                        <button onclick="openEditRoomModal('${room.id}', ${room.totalBeds})" title="Sozlash" class="text-slate-400 hover:text-slate-800 text-xs p-1">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        ${bedsHTML}
+                    </div>
+                `;
+
+                grid.appendChild(roomCard);
+            });
+        }
+
+        function openEditRoomModal(roomId, currentBeds) {
+            document.getElementById('edit-room-id').value = roomId;
+            document.getElementById('edit-room-beds-select').value = currentBeds;
+            document.getElementById('modal-edit-room').classList.remove('hidden');
+        }
+
+        function saveRoomBeds(e) {
+            e.preventDefault();
+            const roomId = document.getElementById('edit-room-id').value;
+            const newBeds = parseInt(document.getElementById('edit-room-beds-select').value);
+
+            const idx = rooms.findIndex(r => r.id === roomId);
+            if (idx !== -1) {
+                rooms[idx].totalBeds = newBeds;
+                addAuditLog(`Xona sozlandi: ${rooms[idx].number}-xona (${newBeds} krovat)`);
+                saveAllToStorage();
+                closeModal('modal-edit-room');
+                showToast('Xona krovatlar soni yangilandi');
+                renderAll();
+            }
+        }
+
+        // --- 3. STUDENTS LOGIC ---
+        function renderStudentsTable(searchQuery = '') {
+            const tbody = document.getElementById('students-table-body');
+            tbody.innerHTML = '';
+
+            const query = searchQuery || document.getElementById('student-search-input').value.trim().toLowerCase();
+
+            const filtered = students.filter(st => 
+                st.fullName.toLowerCase().includes(query) ||
+                st.id.toLowerCase().includes(query) ||
+                st.passport.toLowerCase().includes(query) ||
+                st.roomNumber.includes(query)
+            );
+
+            document.getElementById('student-count-badge').innerText = `Jami: ${filtered.length} ta`;
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center py-6 text-slate-400">Talabalar topilmadi</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(st => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                const photoImg = st.photo ? 
+                    `<img src="${st.photo}" class="w-7 h-7 rounded-lg object-cover border border-slate-200">` :
+                    `<div class="w-7 h-7 rounded-lg bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xs">${st.fullName.charAt(0)}</div>`;
+
+                tr.innerHTML = `
+                    <td class="p-3.5 flex items-center gap-2.5">
+                        ${photoImg}
+                        <div>
+                            <span class="font-bold text-slate-800 text-xs block">${st.id}</span>
+                            <span class="text-[10px] text-slate-400">${st.passport}</span>
+                        </div>
+                    </td>
+                    <td class="p-3.5 font-semibold text-slate-800 cursor-pointer hover:underline" onclick="openStudentProfile('${st.id}')">${st.fullName}</td>
+                    <td class="p-3.5">
+                        <span class="font-semibold text-slate-700 block">${st.floor}-Qavat, ${st.roomNumber}-xona</span>
+                        <span class="text-[10px] text-slate-400">${st.bedNum}-krovat</span>
+                    </td>
+                    <td class="p-3.5 text-slate-600">${st.phone}</td>
+                    <td class="p-3.5">
+                        <span class="font-medium text-slate-700 block">${st.parentName}</span>
+                        <span class="text-[10px] text-slate-400">${st.parentPhone}</span>
+                    </td>
+                    <td class="p-3.5">
+                        ${st.isPaid ? 
+                            `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-check"></i> To'langan</span>` :
+                            `<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-semibold text-[10px] inline-flex items-center gap-1"><i class="fa-solid fa-clock"></i> Qarzdor</span>`
+                        }
+                    </td>
+                    <td class="p-3.5 text-right space-x-1">
+                        <button onclick="editStudent('${st.id}')" title="Tahrirlash" class="p-1 text-slate-400 hover:text-slate-800 transition-colors">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteStudent('${st.id}')" title="O'chirish" class="p-1 text-slate-400 hover:text-rose-600 transition-colors">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function openAddStudentModal(preFloor, preRoomId, preBedNum) {
+            document.getElementById('student-edit-id').value = '';
+            document.getElementById('student-fullname').value = '';
+            document.getElementById('student-passport').value = '';
+            document.getElementById('student-phone').value = '';
+            document.getElementById('student-fee').value = '600000';
+            document.getElementById('parent-name').value = '';
+            document.getElementById('parent-phone').value = '';
+            document.getElementById('student-photo-url').value = '';
+            document.getElementById('photo-preview-container').innerHTML = `<i class="fa-solid fa-user text-xl"></i>`;
+
+            document.getElementById('modal-student-title').innerText = "Yangi Talaba Qo'shish";
+
+            const floorSel = document.getElementById('student-floor-select');
+            floorSel.value = preFloor || 2;
+            onFloorSelectChange();
+
+            if (preRoomId) {
+                document.getElementById('student-room-select').value = preRoomId;
+                onRoomSelectChange();
+            }
+
+            if (preBedNum) {
+                document.getElementById('student-bed-select').value = preBedNum;
+            }
+
+            document.getElementById('modal-student').classList.remove('hidden');
+        }
+
+        function onFloorSelectChange() {
+            const selectedFloor = parseInt(document.getElementById('student-floor-select').value);
+            const roomSel = document.getElementById('student-room-select');
+            roomSel.innerHTML = '';
+
+            const availableRooms = rooms.filter(r => r.floor === selectedFloor);
+            
+            availableRooms.forEach(r => {
+                let opt = document.createElement('option');
+                opt.value = r.id;
+                opt.innerText = `${r.number}-xona (${r.totalBeds} krovat)`;
+                roomSel.appendChild(opt);
+            });
+
+            onRoomSelectChange();
+        }
+
+        function onRoomSelectChange() {
+            const roomId = document.getElementById('student-room-select').value;
+            const bedSel = document.getElementById('student-bed-select');
+            const currentEditId = document.getElementById('student-edit-id').value;
+            bedSel.innerHTML = '';
+
+            const room = rooms.find(r => r.id === roomId);
+            if (!room) return;
+
+            const roomStudents = students.filter(s => s.roomId === roomId && s.id !== currentEditId);
+            const occupiedBedNums = roomStudents.map(s => s.bedNum);
+
+            for (let b = 1; b <= room.totalBeds; b++) {
+                let opt = document.createElement('option');
+                opt.value = b;
+                if (occupiedBedNums.includes(b)) {
+                    opt.innerText = `${b}-krovat (Band)`;
+                    opt.disabled = true;
+                } else {
+                    opt.innerText = `${b}-krovat (Bo'sh)`;
+                }
+                bedSel.appendChild(opt);
+            }
+        }
+
+        function updatePhotoPreview(url) {
+            const container = document.getElementById('photo-preview-container');
+            if (url) {
+                container.innerHTML = `<img src="${url}" class="w-full h-full object-cover">`;
+            } else {
+                container.innerHTML = `<i class="fa-solid fa-user text-xl"></i>`;
+            }
+        }
+
+        function handleFilePhotoUpload(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(evt) {
+                    const dataUrl = evt.target.result;
+                    document.getElementById('student-photo-url').value = dataUrl;
+                    updatePhotoPreview(dataUrl);
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function saveStudent(e) {
+            e.preventDefault();
+
+            const editId = document.getElementById('student-edit-id').value;
+            const fullName = document.getElementById('student-fullname').value.trim();
+            const passport = document.getElementById('student-passport').value.trim();
+            const phone = document.getElementById('student-phone').value.trim();
+            const fee = parseFloat(document.getElementById('student-fee').value);
+            const parentName = document.getElementById('parent-name').value.trim();
+            const parentPhone = document.getElementById('parent-phone').value.trim();
+            const photo = document.getElementById('student-photo-url').value.trim();
+
+            const floor = parseInt(document.getElementById('student-floor-select').value);
+            const roomId = document.getElementById('student-room-select').value;
+            const bedNum = parseInt(document.getElementById('student-bed-select').value);
+
+            const roomObj = rooms.find(r => r.id === roomId);
+
+            if (editId) {
+                const idx = students.findIndex(s => s.id === editId);
+                if (idx !== -1) {
+                    students[idx] = {
+                        ...students[idx],
+                        fullName, passport, phone, fee, parentName, parentPhone, photo, floor, roomId,
+                        roomNumber: roomObj.number, bedNum
+                    };
+                    addAuditLog(`Talaba ma'lumotlari yangilandi: ${fullName} (${editId})`);
+                    showToast('Talaba ma\'lumotlari yangilandi');
+                }
+            } else {
+                const newStudent = {
+                    id: 'ST-' + Math.floor(1000 + Math.random() * 9000),
+                    fullName, passport, phone, photo, floor, roomId,
+                    roomNumber: roomObj.number, bedNum, fee, parentName, parentPhone,
+                    isPaid: true,
+                    lastPaidDate: new Date().toISOString().split('T')[0]
+                };
+                students.push(newStudent);
+                addAuditLog(`Yangi talaba qo'shildi: ${fullName} (${newStudent.id})`);
+                showToast('Yangi talaba qo\'shildi');
+            }
+
+            saveAllToStorage();
+            closeModal('modal-student');
+            renderAll();
+        }
+
+        function editStudent(id) {
+            const st = students.find(s => s.id === id);
+            if (!st) return;
+
+            document.getElementById('student-edit-id').value = st.id;
+            document.getElementById('student-fullname').value = st.fullName;
+            document.getElementById('student-passport').value = st.passport;
+            document.getElementById('student-phone').value = st.phone;
+            document.getElementById('student-fee').value = st.fee;
+            document.getElementById('parent-name').value = st.parentName;
+            document.getElementById('parent-phone').value = st.parentPhone;
+            document.getElementById('student-photo-url').value = st.photo || '';
+
+            updatePhotoPreview(st.photo);
+            document.getElementById('modal-student-title').innerText = "Talabani Tahrirlash";
+
+            document.getElementById('student-floor-select').value = st.floor;
+            onFloorSelectChange();
+            document.getElementById('student-room-select').value = st.roomId;
+            onRoomSelectChange();
+            document.getElementById('student-bed-select').value = st.bedNum;
+
+            document.getElementById('modal-student').classList.remove('hidden');
+        }
+
+        function deleteStudent(id) {
+            const st = students.find(s => s.id === id);
+            students = students.filter(s => s.id !== id);
+            addAuditLog(`Talaba o'chirildi: ${st ? st.fullName : id}`);
+            saveAllToStorage();
+            showToast('Talaba o\'chirildi', 'info');
+            renderAll();
+        }
+
+        function openStudentProfile(id) {
+            const st = students.find(s => s.id === id);
+            if (!st) return;
+
+            const photoEl = st.photo ? 
+                `<img src="${st.photo}" class="w-16 h-16 rounded-xl object-cover border border-slate-300">` :
+                `<div class="w-16 h-16 rounded-xl bg-slate-200 text-slate-700 font-bold flex items-center justify-center text-xl border border-slate-300">${st.fullName.charAt(0)}</div>`;
+
+            document.getElementById('profile-modal-body').innerHTML = `
+                <div class="text-center space-y-1">
+                    <div class="flex justify-center">${photoEl}</div>
+                    <h3 class="font-bold text-slate-800 text-sm">${st.fullName}</h3>
+                    <p class="text-xs text-slate-500">ID: ${st.id} | Pasport: ${st.passport}</p>
+                </div>
+                <div class="space-y-1.5 text-xs pt-3 border-t border-slate-100">
+                    <div class="flex justify-between py-1 border-b border-slate-50">
+                        <span class="text-slate-400">Joylashuv:</span>
+                        <span class="font-bold text-slate-700">${st.floor}-Qavat, ${st.roomNumber}-xona (${st.bedNum}-krovat)</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-50">
+                        <span class="text-slate-400">Telefon:</span>
+                        <span class="font-bold text-slate-700">${st.phone}</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-50">
+                        <span class="text-slate-400">Ota-onasi:</span>
+                        <span class="font-bold text-slate-700">${st.parentName} (${st.parentPhone})</span>
+                    </div>
+                    <div class="flex justify-between py-1 border-b border-slate-50">
+                        <span class="text-slate-400">Oylik To'lov:</span>
+                        <span class="font-bold text-slate-700">${Number(st.fee).toLocaleString()} so'm</span>
+                    </div>
+                    <div class="flex justify-between py-1">
+                        <span class="text-slate-400">To'lov Holati:</span>
+                        <span class="font-bold ${st.isPaid ? 'text-emerald-600' : 'text-rose-600'}">${st.isPaid ? 'To' + "'" + 'langan' : 'Qarzdor'}</span>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('modal-student-profile').classList.remove('hidden');
+        }
+
+        // --- 4. PAYMENTS & REMINDERS LOGIC ---
+        function renderPaymentsTable() {
+            const tbody = document.getElementById('payments-table-body');
+            tbody.innerHTML = '';
+
+            students.forEach(st => {
+                let tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition-colors";
+
+                tr.innerHTML = `
+                    <td class="p-3.5">
+                        <span class="font-bold text-slate-800 block">${st.fullName}</span>
+                        <span class="text-[10px] text-slate-400">ID: ${st.id}</span>
+                    </td>
+                    <td class="p-3.5 font-medium text-slate-700">${st.floor}-qavat, ${st.roomNumber}-xona</td>
+                    <td class="p-3.5 font-bold text-slate-800">${Number(st.fee).toLocaleString()} so'm</td>
+                    <td class="p-3.5">
+                        ${st.isPaid ? 
+                            `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-semibold text-[10px]"><i class="fa-solid fa-check mr-1"></i> To'langan</span>` :
+                            `<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-semibold text-[10px]"><i class="fa-solid fa-clock mr-1"></i> Qarzdor</span>`
+                        }
+                    </td>
+                    <td class="p-3.5 text-slate-500 text-xs">${st.lastPaidDate || 'Yo' + "'" + 'q'}</td>
+                    <td class="p-3.5 text-right space-x-2">
+                        ${st.isPaid ? 
+                            `<button onclick="togglePaymentStatus('${st.id}', false)" class="text-[10px] text-slate-400 hover:text-rose-600 underline">Qarzdor qilish</button>` :
+                            `<button onclick="togglePaymentStatus('${st.id}', true)" class="px-2.5 py-1 bg-emerald-600 text-white rounded text-[10px] font-semibold">To'lovni Tasdiqlash</button>
+                             <button onclick="openReminderModal('${st.id}')" class="px-2.5 py-1 bg-slate-900 text-white rounded text-[10px] font-semibold">Eslatma Yuborish</button>`
+                        }
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function togglePaymentStatus(stId, status) {
+            const idx = students.findIndex(s => s.id === stId);
+            if (idx !== -1) {
+                students[idx].isPaid = status;
+                if (status) {
+                    students[idx].lastPaidDate = new Date().toISOString().split('T')[0];
+                    addAuditLog(`To'lov tasdiqlandi: ${students[idx].fullName} (${Number(students[idx].fee).toLocaleString()} so'm)`);
+                }
+                saveAllToStorage();
+                showToast('To\'lov holati yangilandi');
+                renderAll();
+            }
+        }
+
+        function triggerNewMonthReminders() {
+            students.forEach(st => { st.isPaid = false; });
+            addAuditLog("Yangi oy to'lov davri faollashtirildi.");
+            saveAllToStorage();
+            showToast("Yangi oy to'lovlari faollashtirildi!");
+            renderAll();
+        }
+
+        function openReminderModal(stId) {
+            const st = students.find(s => s.id === stId);
+            if (!st) return;
+
+            const text = `Assalomu alaykum! Yotoqxona bo'yicha hurmatli ${st.parentName}, talaba ${st.fullName} uchun oylik yotoqxona to'lovi (${Number(st.fee).toLocaleString()} so'm) vaqti keldi. Iltimos to'lovni amalga oshirishingizni so'raymiz.`;
+            
+            document.getElementById('reminder-text-body').innerText = text;
+            document.getElementById('reminder-telegram-btn').href = `https://t.me/share/url?url=${encodeURIComponent(text)}`;
+
+            document.getElementById('modal-reminder').classList.remove('hidden');
+        }
+
+        function copyReminderText() {
+            const txt = document.getElementById('reminder-text-body').innerText;
+            navigator.clipboard.writeText(txt);
+            showToast('Eslatma matni nusxalandi');
+        }
+
+        // --- 5. ISSUES (TEXNIK ARIZALAR) LOGIC ---
+        function renderIssues() {
+            const container = document.getElementById('issues-list');
+            container.innerHTML = '';
+
+            if (issues.length === 0) {
+                container.innerHTML = `<p class="col-span-full text-center py-6 text-slate-400 text-xs">Murojaatlar mavjud emas</p>`;
+                return;
+            }
+
+            issues.forEach(iss => {
+                let card = document.createElement('div');
+                card.className = "p-3.5 bg-white rounded-xl border border-slate-200 shadow-sm flex items-center justify-between";
+                card.innerHTML = `
+                    <div class="space-y-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-slate-800 text-xs">${iss.room}-Xona:</span>
+                            <span class="text-xs text-slate-600">${iss.desc}</span>
+                        </div>
+                        <p class="text-[10px] text-slate-400">${iss.date}</p>
+                    </div>
+                    <div>
+                        ${iss.status === 'Bajarildi' ? 
+                            `<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded"><i class="fa-solid fa-check"></i> Hal etildi</span>` :
+                            `<button onclick="resolveIssue('${iss.id}')" class="px-2.5 py-1 bg-amber-500 hover:bg-amber-600 text-white text-[10px] font-bold rounded">Hal etish</button>`
+                        }
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openAddIssueModal() {
+            document.getElementById('issue-room').value = '';
+            document.getElementById('issue-desc').value = '';
+            document.getElementById('modal-issue').classList.remove('hidden');
+        }
+
+        function saveIssue(e) {
+            e.preventDefault();
+            const room = document.getElementById('issue-room').value.trim();
+            const desc = document.getElementById('issue-desc').value.trim();
+
+            const newIss = {
+                id: 'iss-' + Date.now(),
+                room, desc, status: 'Kutilmoqda',
+                date: new Date().toLocaleString('uz-UZ')
+            };
+            issues.unshift(newIss);
+            addAuditLog(`Texnik murojaat qayd etildi: ${room}-xona`);
+            saveAllToStorage();
+            closeModal('modal-issue');
+            showToast('Murojaat saqlandi');
+            renderAll();
+        }
+
+        function resolveIssue(id) {
+            const idx = issues.findIndex(i => i.id === id);
+            if (idx !== -1) {
+                issues[idx].status = 'Bajarildi';
+                addAuditLog(`Texnik murojaat hal etildi: ${issues[idx].room}-xona`);
+                saveAllToStorage();
+                showToast('Murojaat hal etildi deb belgilandi');
+                renderAll();
+            }
+        }
+
+        // --- 6. HISTORY LOGS LOGIC ---
+        function renderHistoryLogs() {
+            const container = document.getElementById('history-log-container');
+            container.innerHTML = '';
+
+            if (logs.length === 0) {
+                container.innerHTML = `<p class="text-center py-6 text-slate-400 text-xs">Harakatlar tarixi bo'sh</p>`;
+                return;
+            }
+
+            logs.forEach(lg => {
+                let item = document.createElement('div');
+                item.className = "p-2.5 rounded-lg bg-slate-50 border border-slate-200 flex items-center justify-between text-xs";
+                item.innerHTML = `
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-circle-dot text-slate-400 text-[8px]"></i>
+                        <span class="font-medium text-slate-800">${lg.action}</span>
+                    </div>
+                    <span class="text-[10px] text-slate-400 font-mono">${lg.time}</span>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function clearHistoryLog() {
+            logs = [];
+            localStorage.setItem(STORAGE_KEY_LOGS, JSON.stringify(logs));
+            renderHistoryLogs();
+            showToast('Tarix tozalandi', 'info');
+        }
+
+        // --- GLOBAL SEARCH ---
+        function handleSearch(val) {
+            if (val.trim() !== '') {
+                switchTab('students');
+                document.getElementById('student-search-input').value = val;
+                renderStudentsTable(val.trim().toLowerCase());
+            }
+        }
+
+        // --- UTILS & TOAST ---
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function showToast(msg, type = 'success') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            const iconEl = document.getElementById('toast-icon');
+
+            msgEl.innerText = msg;
+            if (type === 'info') {
+                iconEl.className = "fa-solid fa-circle-info text-blue-400 text-sm";
+            } else {
+                iconEl.className = "fa-solid fa-circle-check text-emerald-400 text-sm";
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
